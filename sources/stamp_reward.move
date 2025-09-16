@@ -133,6 +133,7 @@ public fun burn_stamp(request: &mut CouponRequest, stamp: Stamp) {
   let Stamp {id, shop, expiry_date: _} = stamp;
   assert!(shop == request.shop, E_NOT_CORRECT_SHOP);
   object::delete(id);
+  request.burned_stamps = request.burned_stamps + 1;
 }
 
 public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Coupon {
