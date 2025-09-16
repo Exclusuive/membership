@@ -129,6 +129,12 @@ public fun request_coupon(shop: &RetailShop, stamp_card: &mut StampCard, coupon_
   }
 }
 
+public fun burn_stamp(request: &mut CouponRequest, stamp: Stamp) {
+  let Stamp {id, shop, expiry_date: _} = stamp;
+  assert!(shop == request.shop, E_NOT_CORRECT_SHOP);
+  object::delete(id);
+}
+
 public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Coupon {
   let CouponRequest{ shop: shop_id, coupon, require_stamps, burned_stamps } = request;
   assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);
