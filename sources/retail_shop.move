@@ -1,13 +1,13 @@
 module exclusuive::retail_shop;
 
 use std::string::String;
-use sui::vec_set::VecSet;
-use sui::clock::Clock;
+use sui::vec_map::VecMap;
 
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
 public struct RetailShop has key {
   id: UID,
-  membership_types: VecSet<RetailMembershipType>
+  membership_types: VecMap<String, RetailMembershipType>,
+  coupon_types: VecMap<String, CouponType>
 }
 
 public struct RetailShopCap has key, store {
@@ -21,21 +21,13 @@ public struct RetailMembershipType has store, copy, drop {
   require_condition: u16
 }
 
-// Membership 오브젝트 -> StampCard
-public struct StampCard has key {
-  id: UID,
-  shop: ID,
-  membership_type: RetailMembershipType,
-  stamps: vector<Stamp>,
-  creation_date: u64,
-  expiry_date: u64
+// Stamp와 교환 가능한 Reward인 Coupon의 타입
+public struct CouponType has store, copy, drop {
+  name: String,
+  require_membership: RetailMembershipType,
+  require_stamps: u16
 }
 
-public struct Stamp has key, store {
-  id: UID,
-  shop: ID,
-  expiry_date: u64
-}
 
 //==================================
 //======== Entry Functions
@@ -64,27 +56,10 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
 // public fun update_retail_membership_type() {}
 
 //==================================
-//======== Public Functions : Stamp Card (Retail Membership)
+//======== Package Functions : Retail Shop
 //==================================
 
-public fun new_stamp_card(shop: &RetailShop, membership_type: RetailMembershipType, clock: &Clock) {
-  // 현재 날짜로부터 1년이 StampCard의 유효 기간
-
+public (package) fun membership_type(shop: &RetailShop, membership_type_name: String): RetailMembershipType {
+  let membership_type = shop.membership_types.get(&membership_type_name);
+  *membership_type
 }
-
-public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp) {
-  // 물건을 구매할 때만 stamp 적립
-
-  // 임시로 컴파일 에러 없앨라고
-  let Stamp{id, shop: _, expiry_date: _} = stamp;
-  object::delete(id);
-}
-
-public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, clock: &Clock) {
-  // expiry date는 최신 Stamp의 expiry date 로 연장
-  // expiry date 지난 stamp 는 폐기
-  // 일정 stamp 개수 condition 넘으면 자동으로 업그레이드??
-}
-
-public (package) fun upgrade_stamp_card() {}
-public (package) fun downgrade_stamp_card() {}
