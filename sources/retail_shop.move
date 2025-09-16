@@ -4,6 +4,7 @@ use std::string::String;
 use sui::vec_map::{Self, VecMap};
 
 const GUEST: vector<u8> = b"guest";
+const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
 
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
 public struct RetailShop has key {
@@ -70,7 +71,13 @@ public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
 }
 
 public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u16) {
+  assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require condition 은 0보다 커야 함
+  assert!(require_condition > 0);
+  shop.membership_types.insert(name, RetailMembershipType{
+    name,
+    require_condition
+  });
 }
 
 // public fun update_retail_membership_type() {}
