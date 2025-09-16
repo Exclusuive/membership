@@ -80,6 +80,19 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
   });
 }
 
+public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_membership_name: String, require_stamps: u16) {
+  assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
+  // require stamps 은 0보다 커야 함
+  assert!(require_stamps > 0);
+
+  let require_membership = shop.membership_type(require_membership_name);
+  shop.coupon_types.insert(name, CouponType{
+    name,
+    require_membership,
+    require_stamps
+  });
+}
+
 // public fun update_retail_membership_type() {}
 
 //==================================
