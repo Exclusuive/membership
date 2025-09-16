@@ -8,6 +8,8 @@ const E_NOT_CORRECT_SHOP: u64 = 1;
 const E_NOT_PAID: u64 = 2;
 
 
+// Product 정보가 있어야 그것 기반으로 pay를 할 수 있다. 아니면 구멍이 너무 커
+
 public struct PaymentRequest {
   shop: ID,
   stamp: Stamp,
@@ -16,6 +18,7 @@ public struct PaymentRequest {
 }
 
 // PyamentRequest를 이용해서 자기만의 pay 로직을 만들면 됨
+// TODO: amount 대신에 Product 가 들어가야 함
 public fun new_request(shop: &RetailShop, amount: u64, ctx: &mut TxContext): PaymentRequest {
   let stamp = new_stamp(shop, ctx);
   PaymentRequest {
@@ -25,6 +28,9 @@ public fun new_request(shop: &RetailShop, amount: u64, ctx: &mut TxContext): Pay
     paid: 0
   }
 }
+
+// TODO: amount 대신에 Coin<USDC>가 들어가야 함
+public fun pay(shop: &RetailShop, request: &mut PaymentRequest, amount: u64) {}
 
 public fun confirm_request(shop: &RetailShop, request: PaymentRequest): Stamp {
   let PaymentRequest{shop: shop_id, stamp, amount, paid} = request;
