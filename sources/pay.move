@@ -1,6 +1,6 @@
 module exclusuive::pay;
 
-use exclusuive::retail_shop::{RetailShop, ProductType, RetailMembershipType, CouponType};
+use exclusuive::retail_shop::{RetailShop};
 use exclusuive::stamp_reward::{Stamp};
 use exclusuive::stamp_reward::new_stamp;
 
