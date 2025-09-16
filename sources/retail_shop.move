@@ -1,7 +1,9 @@
 module exclusuive::retail_shop;
 
 use std::string::String;
-use sui::vec_map::VecMap;
+use sui::vec_map::{Self, VecMap};
+
+const GUEST: vector<u8> = b"guest";
 
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
 public struct RetailShop has key {
@@ -34,6 +36,9 @@ public struct CouponType has store, copy, drop {
 //==================================
 
 entry fun create_shop(ctx: &mut TxContext) {
+  let (shop, cap) = new_shop(ctx);
+  transfer::share_object(shop);
+  transfer::transfer(cap, ctx.sender());
 }
 
 entry fun create_stamp_card(shop: &RetailShop, ctx: &mut TxContext) {
@@ -44,9 +49,24 @@ entry fun create_stamp_card(shop: &RetailShop, ctx: &mut TxContext) {
 //======== Public Functions : Retail Shop
 //==================================
 
-public fun new_shop(ctx: &mut TxContext) {
- // shop 최초 생성 시 shop.membership_types 에 name: "Geust", require_condition: 0인 RetailMembershipType 추가
+public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
+  let mut shop = RetailShop {
+    id: object::new(ctx),
+    membership_types: vec_map::empty(),
+    coupon_types: vec_map::empty()
+  };
+  let cap = RetailShopCap {
+    id: object::new(ctx),
+    shop: object::id(&shop)
+  };
 
+  // shop 최초 생성 시 shop.membership_types 에 name: "Geust", require_condition: 0인 RetailMembershipType 추가
+  shop.membership_types.insert(GUEST.to_string(), RetailMembershipType{
+    name: GUEST.to_string(),
+    require_condition: 0
+  });
+
+  (shop, cap)
 }
 
 public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u16) {
