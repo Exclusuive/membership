@@ -7,6 +7,8 @@ const SIX_MONTH_MS: u64 =  15_552_000_000;
 const ONE_YEAR_MS: u64 =  31_004_000_000;
 const GUEST: vector<u8> = b"guest";
 
+const E_NOT_CORRECT_SHOP: u64 = 1;
+
 public struct StampCard has key {
   id: UID,
   shop: ID,
@@ -67,11 +69,9 @@ public (package) fun new_stamp(shop: &RetailShop,  ctx: &mut TxContext): Stamp {
 }
 
 public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp) {
-  // 물건을 구매할 때만 stamp 적립
-
-  // 임시로 컴파일 에러 없앨라고
-  let Stamp{id, shop: _, expiry_date: _} = stamp;
-  object::delete(id);
+  assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
+  // 물건을 구매할 때만 stamp 적립 -> PaymentRequest confirm 할 때 stamp를 얻을 수 있음
+  stamp_card.stamps.push_back(stamp);
 }
 
 public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard) {
