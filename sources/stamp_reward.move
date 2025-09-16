@@ -33,11 +33,18 @@ public struct Coupon has key, store {
 //======== Entry Function
 //==================================
 
+entry fun create_stamp_card(shop: &RetailShop, ctx: &mut TxContext) {
+  let stamp_card = new_stamp_card(shop, ctx);
+  transfer::transfer(stamp_card, ctx.sender());
+}
+
+
 //==================================
 //======== Public Functions : Stamp Card (Retail Membership)
 //==================================
 
 public fun new_stamp_card(shop: &RetailShop, ctx: &mut TxContext): StampCard {
+  // RetailShop에서 membership_types의 0번째 membership type(Guest Type)으로 StampCard 발급
   let membership_type = shop.membership_type(GUEST.to_string());
   // 현재 날짜로부터 1년이 StampCard의 유효 기간
   StampCard {

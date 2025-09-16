@@ -6,6 +6,10 @@ use sui::vec_map::{Self, VecMap};
 const GUEST: vector<u8> = b"guest";
 const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
 
+//==================================
+//======== Structs
+//==================================
+
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
 public struct RetailShop has key {
   id: UID,
@@ -31,7 +35,6 @@ public struct CouponType has store, copy, drop {
   require_stamps: u16
 }
 
-
 //==================================
 //======== Entry Functions
 //==================================
@@ -40,10 +43,6 @@ entry fun create_shop(ctx: &mut TxContext) {
   let (shop, cap) = new_shop(ctx);
   transfer::share_object(shop);
   transfer::transfer(cap, ctx.sender());
-}
-
-entry fun create_stamp_card(shop: &RetailShop, ctx: &mut TxContext) {
-  // RetailShop에서 membership_types의 0번째 membership type(Guest Type)으로 StampCard 발급
 }
 
 //==================================
