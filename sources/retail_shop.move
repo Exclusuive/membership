@@ -13,6 +13,7 @@ const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
 public struct RetailShop has key {
   id: UID,
+  product_types: VecMap<String, ProductType>,
   membership_types: VecMap<String, RetailMembershipType>,
   coupon_types: VecMap<String, CouponType>
 }
@@ -20,6 +21,12 @@ public struct RetailShop has key {
 public struct RetailShopCap has key, store {
   id: UID,
   shop: ID
+}
+
+// 가게에서 파는 물품
+public struct ProductType has store, copy, drop {
+  name: String,
+  price: u64
 }
 
 // 멤버십 타입: Green, Silver, Gold 등등
@@ -52,6 +59,7 @@ entry fun create_shop(ctx: &mut TxContext) {
 public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
   let mut shop = RetailShop {
     id: object::new(ctx),
+    product_types: vec_map::empty(),
     membership_types: vec_map::empty(),
     coupon_types: vec_map::empty()
   };
@@ -67,6 +75,16 @@ public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
   });
 
   (shop, cap)
+}
+
+public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, price: u64) {
+  assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
+  // price 은 0보다 커야 함
+  assert!(price > 0);
+  shop.product_types.insert(name, ProductType{
+    name,
+    price
+  });
 }
 
 public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u64) {
