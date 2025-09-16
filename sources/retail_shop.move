@@ -115,6 +115,10 @@ public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: Str
 //==================================
 //======== Package Functions : Retail Shop
 //==================================
+public (package) fun product_type(shop: &RetailShop, product_type_name: String): ProductType {
+  let product_type = shop.product_types.get(&product_type_name);
+  *product_type
+}
 
 public (package) fun membership_type(shop: &RetailShop, membership_type_name: String): RetailMembershipType {
   let membership_type = shop.membership_types.get(&membership_type_name);
@@ -124,6 +128,10 @@ public (package) fun membership_type(shop: &RetailShop, membership_type_name: St
 public (package) fun coupon_type(shop: &RetailShop, coupon_type_name: String): CouponType {
   let coupon_type = shop.coupon_types.get(&coupon_type_name);
   *coupon_type
+}
+
+public (package) fun price(product_type: &ProductType): u64 {
+  product_type.price
 }
 
 public (package) fun require_stamps(coupon_type: &CouponType): u64 {

@@ -1,8 +1,9 @@
 module exclusuive::pay;
 
-use exclusuive::retail_shop::{RetailShop, RetailMembershipType, CouponType};
+use exclusuive::retail_shop::{RetailShop, ProductType, RetailMembershipType, CouponType};
 use exclusuive::stamp_reward::{Stamp};
 use exclusuive::stamp_reward::new_stamp;
+use std::string::String;
 
 const E_NOT_CORRECT_SHOP: u64 = 1;
 const E_NOT_PAID: u64 = 2;
@@ -19,12 +20,14 @@ public struct PaymentRequest {
 
 // PyamentRequest를 이용해서 자기만의 pay 로직을 만들면 됨
 // TODO: amount 대신에 Product 가 들어가야 함
-public fun new_request(shop: &RetailShop, amount: u64, ctx: &mut TxContext): PaymentRequest {
+public fun new_request(shop: &RetailShop, product_type_name: String, ctx: &mut TxContext): PaymentRequest {
   let stamp = new_stamp(shop, ctx);
+  let product_type = shop.product_type(product_type_name);
+
   PaymentRequest {
     shop: object::id(shop),
     stamp,
-    amount,
+    amount: product_type.price(),
     paid: 0
   }
 }
