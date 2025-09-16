@@ -2,12 +2,15 @@ module exclusuive::stamp_reward;
 
 // Membership 오브젝트 -> StampCard
 use exclusuive::retail_shop::{RetailShop, RetailMembershipType, CouponType};
+use std::string::String;
 
+const ONE_MONTH_MS: u64 =  2_592_000_000;
 const SIX_MONTH_MS: u64 =  15_552_000_000;
 const ONE_YEAR_MS: u64 =  31_004_000_000;
 const GUEST: vector<u8> = b"guest";
 
 const E_NOT_CORRECT_SHOP: u64 = 1;
+const E_NOT_ENOUGH_STAMPS: u64 = 2;
 
 // stamp는 queue로 사용 (선입선출)
 public struct StampCard has key {
@@ -31,6 +34,14 @@ public struct Coupon has key, store {
   coupon_type: CouponType,
   expiry_date: u64
 }
+
+public struct CouponRequest {
+  shop: ID,
+  coupon: Coupon,
+  require_stamps: u64,
+  burned_stamps: u64
+}
+
 
 //==================================
 //======== Entry Function
@@ -98,6 +109,31 @@ public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx:
   };
 
   // 일정 stamp 개수 condition 넘으면 자동으로 업그레이드?? -> 나중에 구현
+}
+
+public fun request_coupon(shop: &RetailShop, stamp_card: &mut StampCard, coupon_type_name: String, ctx: &mut TxContext): CouponRequest {
+  assert!(object::id(shop) == stamp_card.shop);
+  let coupon_type = shop.coupon_type(coupon_type_name);
+  let coupon = Coupon {
+    id: object::new(ctx),
+    shop: object::id(shop),
+    coupon_type,
+    expiry_date: ctx.epoch_timestamp_ms() + ONE_MONTH_MS
+  };
+
+  CouponRequest {
+    shop: object::id(shop),
+    coupon,
+    require_stamps: coupon_type.require_stamps(),
+    burned_stamps: 0
+  }
+}
+
+public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Coupon {
+  let CouponRequest{ shop: shop_id, coupon, require_stamps, burned_stamps } = request;
+  assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);
+  assert!(require_stamps == burned_stamps, E_NOT_ENOUGH_STAMPS);
+  coupon
 }
 
 public (package) fun upgrade_stamp_card() {}

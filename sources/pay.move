@@ -4,7 +4,9 @@ use exclusuive::retail_shop::{RetailShop, RetailMembershipType, CouponType};
 use exclusuive::stamp_reward::{Stamp};
 use exclusuive::stamp_reward::new_stamp;
 
-const E_NOT_PAID: u64 = 1;
+const E_NOT_CORRECT_SHOP: u64 = 1;
+const E_NOT_PAID: u64 = 2;
+
 
 public struct PaymentRequest {
   shop: ID,
@@ -24,8 +26,9 @@ public fun new_request(shop: &RetailShop, amount: u64, ctx: &mut TxContext): Pay
   }
 }
 
-public fun confirm_request(request: PaymentRequest): Stamp {
-  let PaymentRequest{shop: _, stamp, amount, paid} = request;
+public fun confirm_request(shop: &RetailShop, request: PaymentRequest): Stamp {
+  let PaymentRequest{shop: shop_id, stamp, amount, paid} = request;
+  assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);
   assert!(amount == paid, E_NOT_PAID);
   stamp
 }

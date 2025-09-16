@@ -25,14 +25,14 @@ public struct RetailShopCap has key, store {
 // 멤버십 타입: Green, Silver, Gold 등등
 public struct RetailMembershipType has store, copy, drop {
   name: String,
-  require_condition: u16
+  require_condition: u64
 }
 
 // Stamp와 교환 가능한 Reward인 Coupon의 타입
 public struct CouponType has store, copy, drop {
   name: String,
   require_membership: RetailMembershipType,
-  require_stamps: u16
+  require_stamps: u64
 }
 
 //==================================
@@ -69,7 +69,7 @@ public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
   (shop, cap)
 }
 
-public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u16) {
+public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require condition 은 0보다 커야 함
   assert!(require_condition > 0);
@@ -79,7 +79,7 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
   });
 }
 
-public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_membership_name: String, require_stamps: u16) {
+public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_membership_name: String, require_stamps: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require stamps 은 0보다 커야 함
   assert!(require_stamps > 0);
@@ -101,4 +101,13 @@ public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: Str
 public (package) fun membership_type(shop: &RetailShop, membership_type_name: String): RetailMembershipType {
   let membership_type = shop.membership_types.get(&membership_type_name);
   *membership_type
+}
+
+public (package) fun coupon_type(shop: &RetailShop, coupon_type_name: String): CouponType {
+  let coupon_type = shop.coupon_types.get(&coupon_type_name);
+  *coupon_type
+}
+
+public (package) fun require_stamps(coupon_type: &CouponType): u64 {
+  coupon_type.require_stamps
 }
