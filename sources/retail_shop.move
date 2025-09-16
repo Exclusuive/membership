@@ -2,6 +2,10 @@ module exclusuive::retail_shop;
 
 use std::string::String;
 use sui::vec_map::{Self, VecMap};
+use sui::balance::{Self, Balance};
+use sui::coin::{Coin};
+
+use usdc::usdc::USDC;
 
 const GUEST: vector<u8> = b"guest";
 const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
@@ -15,7 +19,8 @@ public struct RetailShop has key {
   id: UID,
   product_types: VecMap<String, ProductType>,
   membership_types: VecMap<String, RetailMembershipType>,
-  coupon_types: VecMap<String, CouponType>
+  coupon_types: VecMap<String, CouponType>,
+  balance: Balance<USDC>
 }
 
 public struct RetailShopCap has key, store {
@@ -61,7 +66,8 @@ public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
     id: object::new(ctx),
     product_types: vec_map::empty(),
     membership_types: vec_map::empty(),
-    coupon_types: vec_map::empty()
+    coupon_types: vec_map::empty(),
+    balance: balance::zero()
   };
   let cap = RetailShopCap {
     id: object::new(ctx),
@@ -115,6 +121,11 @@ public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: Str
 //==================================
 //======== Package Functions : Retail Shop
 //==================================
+
+public (package) fun add_balance(shop: &mut RetailShop, coin: Coin<USDC>) {
+  shop.balance.join(coin.into_balance());
+}
+
 public (package) fun product_type(shop: &RetailShop, product_type_name: String): ProductType {
   let product_type = shop.product_types.get(&product_type_name);
   *product_type
