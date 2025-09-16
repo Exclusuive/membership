@@ -11,6 +11,7 @@ const GUEST: vector<u8> = b"guest";
 
 const E_NOT_CORRECT_SHOP: u64 = 1;
 const E_NOT_ENOUGH_STAMPS: u64 = 2;
+const E_EXPIRED_STAMP_CARD: u64 = 3;
 
 // stamp는 queue로 사용 (선입선출)
 public struct StampCard has key {
@@ -80,8 +81,9 @@ public (package) fun new_stamp(shop: &RetailShop,  ctx: &mut TxContext): Stamp {
 
 }
 
-public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp) {
+public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp, ctx: &TxContext) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
+  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
 
   // 물건을 구매할 때만 stamp 적립 -> PaymentRequest confirm 할 때 stamp를 얻을 수 있음
   stamp_card.stamps.push_back(stamp);
@@ -89,6 +91,8 @@ public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp
 
 public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx: &TxContext) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
+  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
+
   // expiry date 지난 stamp 는 폐기
   stamp_card.stamps.reverse();
   while (true) {
@@ -112,7 +116,9 @@ public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx:
 }
 
 public fun request_coupon(shop: &RetailShop, stamp_card: &mut StampCard, coupon_type_name: String, ctx: &mut TxContext): CouponRequest {
-  assert!(object::id(shop) == stamp_card.shop);
+  assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
+  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
+
   let coupon_type = shop.coupon_type(coupon_type_name);
   let coupon = Coupon {
     id: object::new(ctx),
