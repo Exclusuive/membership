@@ -10,6 +10,7 @@ use usdc::usdc::USDC;
 use exclusuive::usde::USDE;
 
 const GUEST: vector<u8> = b"guest";
+
 const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
 
 //==================================
@@ -185,6 +186,14 @@ public (package) fun add_balance_usdc(shop: &mut RetailShop, coin: Coin<USDC>) {
 
 public (package) fun add_balance_usde(shop: &mut RetailShop, coin: Coin<USDE>) {
   shop.balance_usde.join(coin.into_balance());
+}
+
+public (package) fun withdraw_all_usdc(shop: &mut RetailShop): Balance<USDC> {
+  shop.balance_usdc.withdraw_all()
+}
+
+public (package) fun withdraw_all_usde(shop: &mut RetailShop): Balance<USDE> {
+  shop.balance_usde.withdraw_all()
 }
 
 public (package) fun shop(cap: &RetailShopCap): ID {
