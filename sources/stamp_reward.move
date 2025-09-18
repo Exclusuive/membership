@@ -3,6 +3,7 @@ module exclusuive::stamp_reward;
 // Membership 오브젝트 -> StampCard
 use exclusuive::retail_shop::{RetailShop, RetailShopCap, RetailMembershipType, CouponType};
 use std::string::String;
+use sui::transfer::Receiving;
 
 const ONE_MONTH_MS: u64 =  2_592_000_000;
 const SIX_MONTH_MS: u64 =  15_552_000_000;
@@ -65,7 +66,6 @@ entry fun create_stamp_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap, sta
   transfer::transfer(stamp, stamp_card.to_address());
 }
 
-
 //==================================
 //======== Public Functions : Stamp Card (Retail Membership)
 //==================================
@@ -97,6 +97,11 @@ public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp
   assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
 
   // 물건을 구매할 때만 stamp 적립 -> PaymentRequest confirm 할 때 stamp를 얻을 수 있음
+  stamp_card.stamps.push_back(stamp);
+}
+
+public fun collect_stamp_inside_stamp_card(stamp_card: &mut StampCard, stamp_receiving: Receiving<Stamp>) {
+  let stamp = transfer::receive(&mut stamp_card.id, stamp_receiving);
   stamp_card.stamps.push_back(stamp);
 }
 
