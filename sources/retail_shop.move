@@ -17,6 +17,7 @@ const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
 public struct RetailShop has key {
   id: UID,
+  name: String,
   product_types: VecMap<String, ProductType>,
   membership_types: VecMap<String, RetailMembershipType>,
   coupon_types: VecMap<String, CouponType>,
@@ -51,8 +52,8 @@ public struct CouponType has store, copy, drop {
 //======== Entry Functions
 //==================================
 
-entry fun create_shop(ctx: &mut TxContext) {
-  let (shop, cap) = new_shop(ctx);
+entry fun create_shop(name: String, ctx: &mut TxContext) {
+  let (shop, cap) = new_shop(name, ctx);
   transfer::share_object(shop);
   transfer::transfer(cap, ctx.sender());
 }
@@ -61,9 +62,10 @@ entry fun create_shop(ctx: &mut TxContext) {
 //======== Public Functions : Retail Shop
 //==================================
 
-public fun new_shop(ctx: &mut TxContext): (RetailShop, RetailShopCap) {
+public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopCap) {
   let mut shop = RetailShop {
     id: object::new(ctx),
+    name,
     product_types: vec_map::empty(),
     membership_types: vec_map::empty(),
     coupon_types: vec_map::empty(),
@@ -124,6 +126,10 @@ public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: Str
 
 public (package) fun add_balance(shop: &mut RetailShop, coin: Coin<USDC>) {
   shop.balance.join(coin.into_balance());
+}
+
+public (package) fun shop(cap: &RetailShopCap): ID {
+  cap.shop
 }
 
 public (package) fun product_type(shop: &RetailShop, product_type_name: String): ProductType {

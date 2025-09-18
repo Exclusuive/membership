@@ -6,6 +6,7 @@ use exclusuive::stamp_reward::new_stamp;
 
 use std::string::String;
 use sui::coin::Coin;
+use sui::event;
 use usdc::usdc::USDC;
 
 const E_NOT_CORRECT_SHOP: u64 = 1;
@@ -19,6 +20,13 @@ public struct PaymentRequest {
   stamp: Stamp,
   amount: u64,
   paid: u64
+}
+
+public struct PaidEvent has copy, drop {
+  shop: ID,
+  payer: address,
+  amount: u64,
+  created_at: u64
 }
 
 // PyamentRequest를 이용해서 자기만의 pay 로직을 만들면 됨
@@ -41,8 +49,14 @@ public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<U
   request.paid = request.paid + value;
 }
 
-public fun confirm_request(shop: &RetailShop, request: PaymentRequest): Stamp {
+public fun confirm_request(shop: &RetailShop, request: PaymentRequest, ctx: &TxContext): Stamp {
   let PaymentRequest{shop: shop_id, stamp, amount, paid} = request;
+  event::emit(PaidEvent { 
+    shop: object::id(shop),
+    payer: ctx.sender(),
+    amount: paid,
+    created_at: ctx.epoch_timestamp_ms()
+  });
   assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);
   assert!(amount == paid, E_NOT_PAID);
   stamp
