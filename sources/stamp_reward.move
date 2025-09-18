@@ -213,6 +213,8 @@ public fun confirm_request_coupon(
 }
 
 /// stamp_reward::add_balance 이용해서 자신만의 payment 로직 구축하면 됨
+/// WARNING: 아니 이러면 MIN_STAMP_AMOUNT만 내고 STAMP 계속 찍어대겠는데???
+/// 오히려 Shop 주인은 좋아할지도...? 하지만 일단 버그가 생길 위험이 있으니 메모
 public fun add_balance_usdc(
   shop: &mut RetailShop, coin: Coin<USDC>, ctx: &mut TxContext
 ):Option<Stamp> {
