@@ -1,7 +1,7 @@
 module exclusuive::stamp_reward;
 
 // Membership 오브젝트 -> StampCard
-use exclusuive::retail_shop::{RetailShop, RetailMembershipType, CouponType};
+use exclusuive::retail_shop::{RetailShop, RetailShopCap, RetailMembershipType, CouponType};
 use std::string::String;
 
 const ONE_MONTH_MS: u64 =  2_592_000_000;
@@ -51,6 +51,12 @@ public struct CouponRequest {
 entry fun create_stamp_card(shop: &RetailShop, ctx: &mut TxContext) {
   let stamp_card = new_stamp_card(shop, ctx);
   transfer::transfer(stamp_card, ctx.sender());
+}
+
+entry fun create_stamp_card_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap, recipient: address, ctx: &mut TxContext) {
+  assert!(object::id(shop) == cap.shop(), E_NOT_CORRECT_SHOP);
+  let stamp_card = new_stamp_card(shop, ctx);
+  transfer::transfer(stamp_card, recipient);
 }
 
 

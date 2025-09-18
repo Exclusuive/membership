@@ -15,6 +15,7 @@ const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
 //==================================
 
 // 가게마다 하나 씩 있는 RetailShop 오브젝트
+// TODO: name
 public struct RetailShop has key {
   id: UID,
   product_types: VecMap<String, ProductType>,
@@ -124,6 +125,10 @@ public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: Str
 
 public (package) fun add_balance(shop: &mut RetailShop, coin: Coin<USDC>) {
   shop.balance.join(coin.into_balance());
+}
+
+public (package) fun shop(cap: &RetailShopCap): ID {
+  cap.shop
 }
 
 public (package) fun product_type(shop: &RetailShop, product_type_name: String): ProductType {
