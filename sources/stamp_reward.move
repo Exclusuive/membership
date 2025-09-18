@@ -92,6 +92,7 @@ public (package) fun new_stamp(shop: &RetailShop,  ctx: &mut TxContext): Stamp {
   }
 }
 
+/// pay::confirm_request()에서 얻은 Stamp를 StampCard에 집어 넣으면 됨
 public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp, ctx: &TxContext) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
   assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
@@ -100,6 +101,8 @@ public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp
   stamp_card.stamps.push_back(stamp);
 }
 
+/// Web2 Payment User 전용: payment 시 shop owner가 user의 StampCard 오브젝트로 Stamp를 보내주고,
+/// 실제 Coupon 교환 시에는 Stamp가 StampCard에 들어있어야 하므로 단순히 옮기는 작업
 public fun collect_stamp_inside_stamp_card(stamp_card: &mut StampCard, stamp_receiving: Receiving<Stamp>) {
   let stamp = transfer::receive(&mut stamp_card.id, stamp_receiving);
   stamp_card.stamps.push_back(stamp);
@@ -158,6 +161,9 @@ public fun burn_stamp(request: &mut CouponRequest, stamp: Stamp) {
   request.burned_stamps = request.burned_stamps + 1;
 }
 
+/// 일단 Coupon을 얻었지만 Coupon을 사용하는 로직은 아직 안 만들었음. 
+/// TODO: Coupon 사용 로직 만들어야 함
+/// TODO: Coupon 사용 로직 시 MembershipType 고려해야 함
 public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Coupon {
   let CouponRequest{ shop: shop_id, coupon, require_stamps, burned_stamps } = request;
   assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);

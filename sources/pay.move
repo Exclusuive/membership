@@ -29,7 +29,7 @@ public struct PaidEvent has copy, drop {
   created_at: u64
 }
 
-// PyamentRequest를 이용해서 자기만의 pay 로직을 만들면 됨
+/// PyamentRequest를 이용해서 자기만의 pay 로직을 만들면 됨
 public fun new_request(shop: &RetailShop, product_type_name: String, ctx: &mut TxContext): PaymentRequest {
   let stamp = new_stamp(shop, ctx);
   let product_type = shop.product_type(product_type_name);
@@ -42,6 +42,7 @@ public fun new_request(shop: &RetailShop, product_type_name: String, ctx: &mut T
   }
 }
 
+/// USDC로 pay 가능: 자기만의 pay 로직에 이 함수를 사용하면 됨
 public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<USDC>) {
   assert!(object::id(shop) == request.shop, E_NOT_CORRECT_SHOP);
   let value = coin.value();
@@ -49,6 +50,7 @@ public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<U
   request.paid = request.paid + value;
 }
 
+/// 마지막으로 PaymentRequest를 확인하고 필요한 금액만큼 지불한게 맞으면 Stamp를 보상으로 줌
 public fun confirm_request(shop: &RetailShop, request: PaymentRequest, ctx: &TxContext): Stamp {
   let PaymentRequest{shop: shop_id, stamp, amount, paid} = request;
   event::emit(PaidEvent { 

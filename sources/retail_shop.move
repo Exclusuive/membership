@@ -52,6 +52,7 @@ public struct CouponType has store, copy, drop {
 //======== Entry Functions
 //==================================
 
+/// Retail Shop Owner는 자신만의 RetailShop Shared Object를 생성 가능
 entry fun create_shop(name: String, ctx: &mut TxContext) {
   let (shop, cap) = new_shop(name, ctx);
   transfer::share_object(shop);
@@ -85,6 +86,7 @@ public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopC
   (shop, cap)
 }
 
+/// RetailShop 메터데이터 설정: ProductType
 public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, price: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // price 은 0보다 커야 함
@@ -95,6 +97,7 @@ public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: St
   });
 }
 
+/// RetailShop 메터데이터 설정: MembershipType
 public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require condition 은 0보다 커야 함
@@ -105,6 +108,7 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
   });
 }
 
+/// RetailShop 메터데이터 설정: CouponType
 public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_membership_name: String, require_stamps: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require stamps 은 0보다 커야 함
