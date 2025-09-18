@@ -59,6 +59,12 @@ entry fun create_stamp_card_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap
   transfer::transfer(stamp_card, recipient);
 }
 
+entry fun create_stamp_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap, stamp_card: ID, ctx: &mut TxContext) {
+  assert!(object::id(shop) == cap.shop(), E_NOT_CORRECT_SHOP);
+  let stamp =  new_stamp(shop, ctx); 
+  transfer::transfer(stamp, stamp_card.to_address());
+}
+
 
 //==================================
 //======== Public Functions : Stamp Card (Retail Membership)
@@ -84,7 +90,6 @@ public (package) fun new_stamp(shop: &RetailShop,  ctx: &mut TxContext): Stamp {
     shop: object::id(shop),
     expiry_date: ctx.epoch_timestamp_ms() + SIX_MONTH_MS // stamp는 6개월의 유효기간
   }
-
 }
 
 public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp, ctx: &TxContext) {
