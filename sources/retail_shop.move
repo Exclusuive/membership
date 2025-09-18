@@ -46,17 +46,17 @@ public struct RetailMembershipType has store, copy, drop {
 }
 
 // Stamp와 교환 가능한 Reward인 Coupon의 타입
-public struct CouponType has store, copy, drop {
-  coupon_kind: CouponKind,
-  product_type: Option<ProductType>,
-  amount: u64,
-  require_membership: RetailMembershipType,
-  require_stamps: u64
-}
-
-public enum CouponKind has store, copy, drop {
-  EXCHANGE,
-  DISCOUNT
+public enum CouponType has store, copy, drop {
+  EXCHANGE{
+    product_type: ProductType,
+    require_membership: RetailMembershipType,
+    require_stamps: u64
+  },
+  DISCOUNT{
+    amount: u64,
+    require_membership: RetailMembershipType,
+    require_stamps: u64
+  },
 }
 
 public struct RetailShopCreatedEvent has copy, drop {
@@ -148,10 +148,8 @@ public fun add_exchange_coupon_type(
 
   let require_membership = shop.membership_type(require_membership_name);
   let product_type = shop.product_type(product_name);
-  shop.coupon_types.insert(name, CouponType{
-    coupon_kind: CouponKind::EXCHANGE,
-    product_type: option::some(product_type),
-    amount: 0,
+  shop.coupon_types.insert(name, CouponType::EXCHANGE{
+    product_type: product_type,
     require_membership,
     require_stamps
   });
@@ -165,9 +163,7 @@ public fun add_discount_coupon_type(
   assert!(require_stamps > 0);
 
   let require_membership = shop.membership_type(require_membership_name);
-  shop.coupon_types.insert(name, CouponType{
-    coupon_kind: CouponKind::DISCOUNT,
-    product_type: option::none(),
+  shop.coupon_types.insert(name, CouponType::DISCOUNT{
     amount,
     require_membership,
     require_stamps
@@ -216,9 +212,9 @@ public (package) fun coupon_type(shop: &RetailShop, coupon_type_name: String): C
 }
 
 public (package) fun coupon_value(coupon_type: &CouponType): u64 {
-  match (coupon_type.coupon_kind) {
-    CouponKind::EXCHANGE => coupon_type.product_type.borrow().price,
-    CouponKind::DISCOUNT => coupon_type.amount
+  match (coupon_type) {
+    CouponType::EXCHANGE{product_type, ..} => product_type.price,
+    CouponType::DISCOUNT{amount, ..} => *amount
   }
 }
 
@@ -227,5 +223,9 @@ public (package) fun price(product_type: &ProductType): u64 {
 }
 
 public (package) fun require_stamps(coupon_type: &CouponType): u64 {
-  coupon_type.require_stamps
+  // coupon_type.require_stamps
+  match (coupon_type) {
+    CouponType::EXCHANGE{require_stamps, ..} => *require_stamps,
+    CouponType::DISCOUNT{require_stamps, ..} => *require_stamps
+  }
 }
