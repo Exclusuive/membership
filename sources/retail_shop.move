@@ -6,6 +6,7 @@ use sui::balance::{Self, Balance};
 use sui::coin::{Coin};
 
 use usdc::usdc::USDC;
+use sui::event;
 
 const GUEST: vector<u8> = b"guest";
 const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
@@ -43,15 +44,31 @@ public struct RetailMembershipType has store, copy, drop {
 
 // Stamp와 교환 가능한 Reward인 Coupon의 타입
 public struct CouponType has store, copy, drop {
-  name: String,
+  coupon_kind: CouponKind,
+  product_type: Option<ProductType>,
+  amount: u64,
   require_membership: RetailMembershipType,
   require_stamps: u64
 }
+
+public enum CouponKind has store, copy, drop {
+  EXCHANGE,
+  DISCOUNT
+}
+
+public struct RetailShopCreatedEvent has copy, drop {
+  shop: ID,
+  name: String,
+  created_at: u64
+}
+
+
 
 //==================================
 //======== Entry Functions
 //==================================
 
+/// Retail Shop Owner는 자신만의 RetailShop Shared Object를 생성 가능
 entry fun create_shop(name: String, ctx: &mut TxContext) {
   let (shop, cap) = new_shop(name, ctx);
   transfer::share_object(shop);
@@ -82,9 +99,16 @@ public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopC
     require_condition: 0
   });
 
+  event::emit(RetailShopCreatedEvent { 
+    shop: object::id(&shop),
+    name,
+    created_at: ctx.epoch_timestamp_ms()
+  });
+
   (shop, cap)
 }
 
+/// RetailShop 메터데이터 설정: ProductType
 public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, price: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // price 은 0보다 커야 함
@@ -95,6 +119,7 @@ public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: St
   });
 }
 
+/// RetailShop 메터데이터 설정: MembershipType
 public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require condition 은 0보다 커야 함
@@ -105,14 +130,33 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
   });
 }
 
-public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_membership_name: String, require_stamps: u64) {
+/// RetailShop 메터데이터 설정: CouponType
+public fun add_exchange_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, product_name: String, require_membership_name: String, require_stamps: u64) {
+  assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
+  // require stamps 은 0보다 커야 함
+  assert!(require_stamps > 0);
+
+  let require_membership = shop.membership_type(require_membership_name);
+  let product_type = shop.product_type(product_name);
+  shop.coupon_types.insert(name, CouponType{
+    coupon_kind: CouponKind::EXCHANGE,
+    product_type: option::some(product_type),
+    amount: 0,
+    require_membership,
+    require_stamps
+  });
+}
+
+public fun add_discount_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, amount: u64, require_membership_name: String, require_stamps: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require stamps 은 0보다 커야 함
   assert!(require_stamps > 0);
 
   let require_membership = shop.membership_type(require_membership_name);
   shop.coupon_types.insert(name, CouponType{
-    name,
+    coupon_kind: CouponKind::DISCOUNT,
+    product_type: option::none(),
+    amount,
     require_membership,
     require_stamps
   });
@@ -145,6 +189,13 @@ public (package) fun membership_type(shop: &RetailShop, membership_type_name: St
 public (package) fun coupon_type(shop: &RetailShop, coupon_type_name: String): CouponType {
   let coupon_type = shop.coupon_types.get(&coupon_type_name);
   *coupon_type
+}
+
+public (package) fun coupon_amount(coupon_type: &CouponType): u64 {
+  match (coupon_type.coupon_kind) {
+    CouponKind::EXCHANGE => coupon_type.product_type.borrow().price,
+    CouponKind::DISCOUNT => coupon_type.amount
+  }
 }
 
 public (package) fun price(product_type: &ProductType): u64 {
