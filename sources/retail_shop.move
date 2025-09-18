@@ -4,9 +4,10 @@ use std::string::String;
 use sui::vec_map::{Self, VecMap};
 use sui::balance::{Self, Balance};
 use sui::coin::{Coin};
+use sui::event;
 
 use usdc::usdc::USDC;
-use sui::event;
+use exclusuive::usde::USDE;
 
 const GUEST: vector<u8> = b"guest";
 const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
@@ -22,7 +23,8 @@ public struct RetailShop has key {
   product_types: VecMap<String, ProductType>,
   membership_types: VecMap<String, RetailMembershipType>,
   coupon_types: VecMap<String, CouponType>,
-  balance: Balance<USDC>
+  balance_usdc: Balance<USDC>,
+  balance_usde: Balance<USDE>
 }
 
 public struct RetailShopCap has key, store {
@@ -86,7 +88,8 @@ public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopC
     product_types: vec_map::empty(),
     membership_types: vec_map::empty(),
     coupon_types: vec_map::empty(),
-    balance: balance::zero()
+    balance_usdc: balance::zero(),
+    balance_usde: balance::zero()
   };
   let cap = RetailShopCap {
     id: object::new(ctx),
@@ -168,8 +171,12 @@ public fun add_discount_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, 
 //======== Package Functions : Retail Shop
 //==================================
 
-public (package) fun add_balance(shop: &mut RetailShop, coin: Coin<USDC>) {
-  shop.balance.join(coin.into_balance());
+public (package) fun add_balance_usdc(shop: &mut RetailShop, coin: Coin<USDC>) {
+  shop.balance_usdc.join(coin.into_balance());
+}
+
+public (package) fun add_balance_usde(shop: &mut RetailShop, coin: Coin<USDE>) {
+  shop.balance_usde.join(coin.into_balance());
 }
 
 public (package) fun shop(cap: &RetailShopCap): ID {

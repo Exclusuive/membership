@@ -55,7 +55,7 @@ public fun new_request_extension(shop: &RetailShop, price: u64, ctx: &mut TxCont
 public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<USDC>) {
   assert!(object::id(shop) == request.shop, E_NOT_CORRECT_SHOP);
   let value = coin.value();
-  shop.add_balance(coin);
+  shop.add_balance_usdc(coin);
   request.paid = request.paid + value;
 }
 
