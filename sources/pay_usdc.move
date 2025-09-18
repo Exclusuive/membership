@@ -1,4 +1,4 @@
-module exclusuive::pay;
+module exclusuive::pay_usdc;
 
 use exclusuive::retail_shop::{RetailShop};
 use exclusuive::stamp_reward::{Self, Stamp, Coupon};
