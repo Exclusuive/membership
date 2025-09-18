@@ -6,6 +6,7 @@ use sui::balance::{Self, Balance};
 use sui::coin::{Coin};
 
 use usdc::usdc::USDC;
+use sui::event;
 
 const GUEST: vector<u8> = b"guest";
 const E_NOT_CORRECT_SHOP_CAP: u64 = 1;
@@ -55,6 +56,13 @@ public enum CouponKind has store, copy, drop {
   DISCOUNT
 }
 
+public struct RetailShopCreatedEvent has copy, drop {
+  shop: ID,
+  name: String,
+  created_at: u64
+}
+
+
 
 //==================================
 //======== Entry Functions
@@ -89,6 +97,12 @@ public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopC
   shop.membership_types.insert(GUEST.to_string(), RetailMembershipType{
     name: GUEST.to_string(),
     require_condition: 0
+  });
+
+  event::emit(RetailShopCreatedEvent { 
+    shop: object::id(&shop),
+    name,
+    created_at: ctx.epoch_timestamp_ms()
   });
 
   (shop, cap)
