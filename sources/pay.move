@@ -1,6 +1,6 @@
 module exclusuive::pay;
 
-use exclusuive::retail_shop::{RetailShop, CouponKind};
+use exclusuive::retail_shop::{RetailShop};
 use exclusuive::stamp_reward::{Self, Stamp, Coupon};
 
 use std::string::String;
@@ -16,14 +16,14 @@ const E_NOT_PAID: u64 = 2;
 public struct PaymentRequest {
   shop: ID,
   stamp: Stamp,
-  amount: u64,
+  price: u64,
   paid: u64
 }
 
 public struct PaidEvent has copy, drop {
   shop: ID,
   payer: address,
-  amount: u64,
+  price: u64,
   created_at: u64
 }
 
@@ -35,7 +35,7 @@ public fun new_request(shop: &RetailShop, product_type_name: String, ctx: &mut T
   PaymentRequest {
     shop: object::id(shop),
     stamp,
-    amount: product_type.price(),
+    price: product_type.price(),
     paid: 0
   }
 }
@@ -48,24 +48,29 @@ public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<U
   request.paid = request.paid + value;
 }
 
+/// 만약 coupon 사용 시에 coupon 금액이 product price 보다 클 경우 그냥 잔액 안 남기고 소진하는 걸로
 public fun consume_coupon(shop: &RetailShop, request: &mut PaymentRequest, coupon: Coupon, ctx: &TxContext) {
   assert!(object::id(shop) == request.shop, E_NOT_CORRECT_SHOP);
   let (coupon_shop, coupon_type) = stamp_reward::unpack_coupon(coupon, ctx);
   assert!(object::id(shop) == coupon_shop, E_NOT_CORRECT_SHOP);
   let value = coupon_type.coupon_amount();
-  request.paid = request.paid + value;
+  if (request.price < value) {
+    request.paid = request.price;
+  } else {
+    request.paid = request.paid + value;
+  };
 }
 
 /// 마지막으로 PaymentRequest를 확인하고 필요한 금액만큼 지불한게 맞으면 Stamp를 보상으로 줌
 public fun confirm_request(shop: &RetailShop, request: PaymentRequest, ctx: &TxContext): Stamp {
-  let PaymentRequest{shop: shop_id, stamp, amount, paid} = request;
+  let PaymentRequest{shop: shop_id, stamp, price, paid} = request;
   event::emit(PaidEvent { 
     shop: object::id(shop),
     payer: ctx.sender(),
-    amount: paid,
+    price: paid,
     created_at: ctx.epoch_timestamp_ms()
   });
   assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);
-  assert!(amount == paid, E_NOT_PAID);
+  assert!(price == paid, E_NOT_PAID);
   stamp
 }
