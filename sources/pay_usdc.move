@@ -15,7 +15,18 @@ const E_NOT_CORRECT_SHOP: u64 = 1;
 const E_NOT_PAID_ENOUGH_OR_OVER_PAID: u64 = 2;
 const E_PAID_BEFORE_CONSUMMING_COUPON: u64 = 3;
 const E_TRY_TO_CONSUME_COUPONE_MORE_THAN_ONCE: u64 = 4;
+const E_NOT_CORRECT_ADMIN: u64 = 5;
 
+
+public struct UsdcVault has key {
+  id: UID,
+  balance: Balance<USDC>
+}
+
+public struct UsdcVaultCap has key, store {
+  id: UID,
+  vault: ID
+}
 
 // Product 정보가 있어야 그것 기반으로 pay를 할 수 있다. 아니면 구멍이 너무 커
 public struct PaymentRequest {
@@ -32,6 +43,47 @@ public struct PaidEvent has copy, drop {
   created_at: u64
 }
 
+
+fun init(ctx: &mut TxContext) {
+  let vault = UsdcVault {
+    id: object::new(ctx),
+    balance: balance::zero()
+  };
+
+  let cap = UsdcVaultCap {
+    id: object::new(ctx),
+    vault: object::id(&vault)
+  };
+
+  transfer::share_object(vault);
+  transfer::transfer(cap, ctx.sender());
+}
+
+//==================================
+//======== Entry Functions
+//==================================
+
+entry fun withdraw_retail_shop(shop: &mut RetailShop, cap: &RetailShopCap, vault: &mut UsdcVault, ctx: &mut TxContext) {
+  assert!(object::id(shop) == cap.shop(), E_NOT_CORRECT_SHOP);
+  let mut all_usdc = shop.withdraw_all_usdc();
+  let fee_amount = (all_usdc.value().divide_and_round_up(10000) - 1) * USDC_FEE_BPS;
+  let fee = all_usdc.split(fee_amount);
+  transfer::public_transfer(all_usdc.into_coin(ctx), ctx.sender());
+
+  // admin이 관리하는 UsdcVault에 fee 넣기
+  vault.balance.join(fee);
+}
+
+entry fun withdraw_usdc_vault(vault: &mut UsdcVault, cap: &UsdcVaultCap, amount: u64, ctx: &mut TxContext) {
+  assert!(object::id(vault) == cap.vault, E_NOT_CORRECT_ADMIN);
+  let usdc = vault.balance.split(amount).into_coin(ctx);
+  transfer::public_transfer(usdc, ctx.sender());
+}
+
+//==================================
+//======== Public Functions 
+//==================================
+
 /// 다른 Web3 Retail MarketPlace 용 PaymentRequest
 public fun new_request(
   shop: &RetailShop, price: u64
@@ -43,26 +95,6 @@ public fun new_request(
     coupon_paid: 0
   }
 }
-//==================================
-//======== Entry Functions
-//==================================
-
-entry fun withdraw_usdc(shop: &mut RetailShop, cap: &RetailShopCap, ctx: &mut TxContext) {
-  assert!(object::id(shop) == cap.shop(), E_NOT_CORRECT_SHOP);
-  let mut all_usdc = shop.withdraw_all_usdc();
-  let fee_amount = (all_usdc.value().divide_and_round_up(10000) - 1) * USDC_FEE_BPS;
-  let fee = all_usdc.split(fee_amount);
-  transfer::public_transfer(all_usdc.into_coin(ctx), ctx.sender());
-
-  // admin 에게 보내야하는데 일단 sender에게 보내는 걸로. 
-  // 어떻게 admin 주소를 설정할지 고민중... 
-  // USDC Pool을 하나 만들자 -> init 함수에 넣어
-  transfer::public_transfer(fee.into_coin(ctx), ctx.sender());
-}
-
-//==================================
-//======== Public Functions 
-//==================================
 
 public fun new_request_with_product(
   shop: &RetailShop, product_type_name: String
