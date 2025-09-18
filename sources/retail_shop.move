@@ -198,7 +198,7 @@ public (package) fun coupon_type(shop: &RetailShop, coupon_type_name: String): C
   *coupon_type
 }
 
-public (package) fun coupon_amount(coupon_type: &CouponType): u64 {
+public (package) fun coupon_value(coupon_type: &CouponType): u64 {
   match (coupon_type.coupon_kind) {
     CouponKind::EXCHANGE => coupon_type.product_type.borrow().price,
     CouponKind::DISCOUNT => coupon_type.amount

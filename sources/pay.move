@@ -61,7 +61,7 @@ public fun consume_coupon(
   let (coupon_shop, coupon_type) = stamp_reward::unpack_coupon(coupon, ctx);
   assert!(object::id(shop) == coupon_shop, E_NOT_CORRECT_SHOP);
 
-  let value = coupon_type.coupon_amount();
+  let value = coupon_type.coupon_value();
   if (request.price < value) {
     request.coupon_paid = request.price;
   } else {
