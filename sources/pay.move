@@ -1,8 +1,7 @@
 module exclusuive::pay;
 
-use exclusuive::retail_shop::{RetailShop};
-use exclusuive::stamp_reward::{Stamp};
-use exclusuive::stamp_reward::new_stamp;
+use exclusuive::retail_shop::{RetailShop, CouponKind};
+use exclusuive::stamp_reward::{Self, Stamp, Coupon};
 
 use std::string::String;
 use sui::coin::Coin;
@@ -11,7 +10,6 @@ use usdc::usdc::USDC;
 
 const E_NOT_CORRECT_SHOP: u64 = 1;
 const E_NOT_PAID: u64 = 2;
-
 
 // Product 정보가 있어야 그것 기반으로 pay를 할 수 있다. 아니면 구멍이 너무 커
 
@@ -31,7 +29,7 @@ public struct PaidEvent has copy, drop {
 
 /// PyamentRequest를 이용해서 자기만의 pay 로직을 만들면 됨
 public fun new_request(shop: &RetailShop, product_type_name: String, ctx: &mut TxContext): PaymentRequest {
-  let stamp = new_stamp(shop, ctx);
+  let stamp = stamp_reward::new_stamp(shop, ctx);
   let product_type = shop.product_type(product_type_name);
 
   PaymentRequest {
@@ -47,6 +45,14 @@ public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<U
   assert!(object::id(shop) == request.shop, E_NOT_CORRECT_SHOP);
   let value = coin.value();
   shop.add_balance(coin);
+  request.paid = request.paid + value;
+}
+
+public fun consume_coupon(shop: &RetailShop, request: &mut PaymentRequest, coupon: Coupon, ctx: &TxContext) {
+  assert!(object::id(shop) == request.shop, E_NOT_CORRECT_SHOP);
+  let (coupon_shop, coupon_type) = stamp_reward::unpack_coupon(coupon, ctx);
+  assert!(object::id(shop) == coupon_shop, E_NOT_CORRECT_SHOP);
+  let value = coupon_type.coupon_amount();
   request.paid = request.paid + value;
 }
 

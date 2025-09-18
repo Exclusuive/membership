@@ -43,10 +43,18 @@ public struct RetailMembershipType has store, copy, drop {
 
 // Stamp와 교환 가능한 Reward인 Coupon의 타입
 public struct CouponType has store, copy, drop {
-  name: String,
+  coupon_kind: CouponKind,
+  product_type: Option<ProductType>,
+  amount: u64,
   require_membership: RetailMembershipType,
   require_stamps: u64
 }
+
+public enum CouponKind has store, copy, drop {
+  EXCHANGE,
+  DISCOUNT
+}
+
 
 //==================================
 //======== Entry Functions
@@ -109,14 +117,32 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
 }
 
 /// RetailShop 메터데이터 설정: CouponType
-public fun add_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_membership_name: String, require_stamps: u64) {
+public fun add_exchange_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, product_name: String, require_membership_name: String, require_stamps: u64) {
+  assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
+  // require stamps 은 0보다 커야 함
+  assert!(require_stamps > 0);
+
+  let require_membership = shop.membership_type(require_membership_name);
+  let product_type = shop.product_type(product_name);
+  shop.coupon_types.insert(name, CouponType{
+    coupon_kind: CouponKind::EXCHANGE,
+    product_type: option::some(product_type),
+    amount: 0,
+    require_membership,
+    require_stamps
+  });
+}
+
+public fun add_discount_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, amount: u64, require_membership_name: String, require_stamps: u64) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require stamps 은 0보다 커야 함
   assert!(require_stamps > 0);
 
   let require_membership = shop.membership_type(require_membership_name);
   shop.coupon_types.insert(name, CouponType{
-    name,
+    coupon_kind: CouponKind::DISCOUNT,
+    product_type: option::none(),
+    amount,
     require_membership,
     require_stamps
   });
@@ -149,6 +175,13 @@ public (package) fun membership_type(shop: &RetailShop, membership_type_name: St
 public (package) fun coupon_type(shop: &RetailShop, coupon_type_name: String): CouponType {
   let coupon_type = shop.coupon_types.get(&coupon_type_name);
   *coupon_type
+}
+
+public (package) fun coupon_amount(coupon_type: &CouponType): u64 {
+  match (coupon_type.coupon_kind) {
+    CouponKind::EXCHANGE => coupon_type.product_type.borrow().price,
+    CouponKind::DISCOUNT => coupon_type.amount
+  }
 }
 
 public (package) fun price(product_type: &ProductType): u64 {

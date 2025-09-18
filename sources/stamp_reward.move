@@ -12,7 +12,7 @@ const GUEST: vector<u8> = b"guest";
 
 const E_NOT_CORRECT_SHOP: u64 = 1;
 const E_NOT_ENOUGH_STAMPS: u64 = 2;
-const E_EXPIRED_STAMP_CARD: u64 = 3;
+const E_EXPIRED: u64 = 3;
 
 // stamp는 queue로 사용 (선입선출)
 public struct StampCard has key {
@@ -95,7 +95,7 @@ public (package) fun new_stamp(shop: &RetailShop,  ctx: &mut TxContext): Stamp {
 /// pay::confirm_request()에서 얻은 Stamp를 StampCard에 집어 넣으면 됨
 public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp, ctx: &TxContext) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
-  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
+  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
 
   // 물건을 구매할 때만 stamp 적립 -> PaymentRequest confirm 할 때 stamp를 얻을 수 있음
   stamp_card.stamps.push_back(stamp);
@@ -110,7 +110,7 @@ public fun collect_stamp_inside_stamp_card(stamp_card: &mut StampCard, stamp_rec
 
 public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx: &TxContext) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
-  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
+  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
 
   // expiry date 지난 stamp 는 폐기
   stamp_card.stamps.reverse();
@@ -136,7 +136,7 @@ public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx:
 
 public fun request_coupon(shop: &RetailShop, stamp_card: &mut StampCard, coupon_type_name: String, ctx: &mut TxContext): CouponRequest {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
-  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED_STAMP_CARD);
+  assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
 
   let coupon_type = shop.coupon_type(coupon_type_name);
   let coupon = Coupon {
@@ -161,6 +161,7 @@ public fun burn_stamp(request: &mut CouponRequest, stamp: Stamp) {
   request.burned_stamps = request.burned_stamps + 1;
 }
 
+
 /// 일단 Coupon을 얻었지만 Coupon을 사용하는 로직은 아직 안 만들었음. 
 /// TODO: Coupon 사용 로직 만들어야 함
 /// TODO: Coupon 사용 로직 시 MembershipType 고려해야 함
@@ -173,3 +174,11 @@ public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Co
 
 public (package) fun upgrade_stamp_card() {}
 public (package) fun downgrade_stamp_card() {}
+
+public (package) fun unpack_coupon(coupon: Coupon, ctx: &TxContext): (ID, CouponType) {
+  let Coupon {id, shop, coupon_type, expiry_date} = coupon;
+  assert!(expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
+
+  object::delete(id);
+  (shop, coupon_type)
+}
