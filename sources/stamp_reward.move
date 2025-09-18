@@ -73,7 +73,9 @@ entry fun create_stamp_card(shop: &RetailShop, ctx: &mut TxContext) {
   transfer::transfer(stamp_card, ctx.sender());
 }
 
-entry fun create_stamp_card_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap, recipient: address, ctx: &mut TxContext) {
+entry fun create_stamp_card_by_shop_owner(
+  shop: &RetailShop, cap: &RetailShopCap, recipient: address, ctx: &mut TxContext
+) {
   assert!(object::id(shop) == cap.shop(), E_NOT_CORRECT_SHOP);
   let stamp_card = new_stamp_card(shop, ctx);
   event::emit(StampCardCreatedEvent { 
@@ -84,7 +86,9 @@ entry fun create_stamp_card_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap
   transfer::transfer(stamp_card, recipient);
 }
 
-entry fun create_stamp_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap, stamp_card: ID, ctx: &mut TxContext) {
+entry fun create_stamp_by_shop_owner(
+  shop: &RetailShop, cap: &RetailShopCap, stamp_card: ID, ctx: &mut TxContext
+) {
   assert!(object::id(shop) == cap.shop(), E_NOT_CORRECT_SHOP);
   let stamp =  new_stamp(shop, ctx); 
   transfer::transfer(stamp, stamp_card.to_address());
@@ -94,7 +98,9 @@ entry fun create_stamp_by_shop_owner(shop: &RetailShop, cap: &RetailShopCap, sta
 //======== Public Functions : Stamp Card (Retail Membership)
 //==================================
 
-public fun new_stamp_card(shop: &RetailShop, ctx: &mut TxContext): StampCard {
+public fun new_stamp_card(
+  shop: &RetailShop, ctx: &mut TxContext
+): StampCard {
   // RetailShop에서 membership_types의 0번째 membership type(Guest Type)으로 StampCard 발급
   let membership_type = shop.membership_type(GUEST.to_string());
   // 현재 날짜로부터 1년이 StampCard의 유효 기간
@@ -117,7 +123,9 @@ public (package) fun new_stamp(shop: &RetailShop,  ctx: &mut TxContext): Stamp {
 }
 
 /// pay::confirm_request()에서 얻은 Stamp를 StampCard에 집어 넣으면 됨
-public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp, ctx: &TxContext) {
+public fun add_stamp(
+  shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp, ctx: &TxContext
+) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
   assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
 
@@ -127,12 +135,16 @@ public fun add_stamp(shop: &RetailShop, stamp_card: &mut StampCard, stamp: Stamp
 
 /// Web2 Payment User 전용: payment 시 shop owner가 user의 StampCard 오브젝트로 Stamp를 보내주고,
 /// 실제 Coupon 교환 시에는 Stamp가 StampCard에 들어있어야 하므로 단순히 옮기는 작업
-public fun collect_stamp_inside_stamp_card(stamp_card: &mut StampCard, stamp_receiving: Receiving<Stamp>) {
+public fun collect_stamp_inside_stamp_card(
+  stamp_card: &mut StampCard, stamp_receiving: Receiving<Stamp>
+) {
   let stamp = transfer::receive(&mut stamp_card.id, stamp_receiving);
   stamp_card.stamps.push_back(stamp);
 }
 
-public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx: &TxContext) {
+public fun update_stamp_card(
+  shop: &RetailShop, stamp_card: &mut StampCard, ctx: &TxContext
+) {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
   assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
 
@@ -158,7 +170,9 @@ public fun update_stamp_card(shop: &RetailShop, stamp_card: &mut StampCard, ctx:
   // 일정 stamp 개수 condition 넘으면 자동으로 업그레이드?? -> 나중에 구현
 }
 
-public fun request_coupon(shop: &RetailShop, stamp_card: &mut StampCard, coupon_type_name: String, ctx: &mut TxContext): CouponRequest {
+public fun request_coupon(
+  shop: &RetailShop, stamp_card: &mut StampCard, coupon_type_name: String, ctx: &mut TxContext
+): CouponRequest {
   assert!(object::id(shop) == stamp_card.shop, E_NOT_CORRECT_SHOP);
   assert!(stamp_card.expiry_date > ctx.epoch_timestamp_ms(), E_EXPIRED);
 
@@ -189,7 +203,9 @@ public fun burn_stamp(request: &mut CouponRequest, stamp: Stamp) {
 /// 일단 Coupon을 얻었지만 Coupon을 사용하는 로직은 아직 안 만들었음. 
 /// TODO: Coupon 사용 로직 만들어야 함
 /// TODO: Coupon 사용 로직 시 MembershipType 고려해야 함
-public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Coupon {
+public fun confirm_request_coupon(
+  shop: &RetailShop, request: CouponRequest
+): Coupon {
   let CouponRequest{ shop: shop_id, coupon, require_stamps, burned_stamps } = request;
   assert!(object::id(shop) == shop_id, E_NOT_CORRECT_SHOP);
   assert!(require_stamps == burned_stamps, E_NOT_ENOUGH_STAMPS);
@@ -197,7 +213,9 @@ public fun confirm_request_coupon(shop: &RetailShop, request: CouponRequest): Co
 }
 
 /// stamp_reward::add_balance 이용해서 자신만의 payment 로직 구축하면 됨
-public fun add_balance_usdc(shop: &mut RetailShop, coin: Coin<USDC>, ctx: &mut TxContext):Option<Stamp> {
+public fun add_balance_usdc(
+  shop: &mut RetailShop, coin: Coin<USDC>, ctx: &mut TxContext
+):Option<Stamp> {
   let value = coin.value();
   shop.add_balance_usdc(coin);
   if (value > MIN_STAMP_AMOUNT){
@@ -208,7 +226,9 @@ public fun add_balance_usdc(shop: &mut RetailShop, coin: Coin<USDC>, ctx: &mut T
 }
 
 /// stamp_reward::add_balance 이용해서 자신만의 payment 로직 구축하면 됨
-public fun add_balance_usde(shop: &mut RetailShop, coin: Coin<USDE>, ctx: &mut TxContext): Option<Stamp> {
+public fun add_balance_usde(
+  shop: &mut RetailShop, coin: Coin<USDE>, ctx: &mut TxContext
+): Option<Stamp> {
   let value = coin.value();
   shop.add_balance_usde(coin);
   if (value > MIN_STAMP_AMOUNT){

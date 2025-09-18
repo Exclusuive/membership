@@ -64,8 +64,6 @@ public struct RetailShopCreatedEvent has copy, drop {
   created_at: u64
 }
 
-
-
 //==================================
 //======== Entry Functions
 //==================================
@@ -81,7 +79,9 @@ entry fun create_shop(name: String, ctx: &mut TxContext) {
 //======== Public Functions : Retail Shop
 //==================================
 
-public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopCap) {
+public fun new_shop(
+  name: String, ctx: &mut TxContext): (RetailShop, RetailShopCap
+) {
   let mut shop = RetailShop {
     id: object::new(ctx),
     name,
@@ -112,7 +112,9 @@ public fun new_shop(name: String, ctx: &mut TxContext): (RetailShop, RetailShopC
 }
 
 /// RetailShop 메터데이터 설정: ProductType
-public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, price: u64) {
+public fun add_product_type(
+  shop: &mut RetailShop, cap: &RetailShopCap, name: String, price: u64
+) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // price 은 0보다 커야 함
   assert!(price > 0);
@@ -123,7 +125,9 @@ public fun add_product_type(shop: &mut RetailShop, cap: &RetailShopCap, name: St
 }
 
 /// RetailShop 메터데이터 설정: MembershipType
-public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u64) {
+public fun add_retail_membership_type(
+  shop: &mut RetailShop, cap: &RetailShopCap, name: String, require_condition: u64
+) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require condition 은 0보다 커야 함
   assert!(require_condition > 0);
@@ -134,7 +138,9 @@ public fun add_retail_membership_type(shop: &mut RetailShop, cap: &RetailShopCap
 }
 
 /// RetailShop 메터데이터 설정: CouponType
-public fun add_exchange_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, product_name: String, require_membership_name: String, require_stamps: u64) {
+public fun add_exchange_coupon_type(
+  shop: &mut RetailShop, cap: &RetailShopCap, name: String, product_name: String, require_membership_name: String, require_stamps: u64
+) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require stamps 은 0보다 커야 함
   assert!(require_stamps > 0);
@@ -150,7 +156,9 @@ public fun add_exchange_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, 
   });
 }
 
-public fun add_discount_coupon_type(shop: &mut RetailShop, cap: &RetailShopCap, name: String, amount: u64, require_membership_name: String, require_stamps: u64) {
+public fun add_discount_coupon_type(
+  shop: &mut RetailShop, cap: &RetailShopCap, name: String, amount: u64, require_membership_name: String, require_stamps: u64
+) {
   assert!(object::id(shop) == cap.shop, E_NOT_CORRECT_SHOP_CAP);
   // require stamps 은 0보다 커야 함
   assert!(require_stamps > 0);

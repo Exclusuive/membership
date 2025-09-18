@@ -49,7 +49,6 @@ public fun new_request_with_product(
   new_request(shop, product_type.price())
 }
 
-
 /// 만약 coupon 사용 시에 coupon 금액이 product price 보다 클 경우 그냥 잔액 안 남기고 소진하는 걸로
 /// pay 전에 먼저 coupon을 사용해야 하고, coupon은 한 번에 1개만 사용 가능
 public fun consume_coupon(
@@ -70,13 +69,17 @@ public fun consume_coupon(
 }
 
 /// USDC로 pay 가능: 자기만의 pay 로직에 이 함수를 사용하면 됨
-public fun pay(shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<USDC>) {
+public fun pay(
+  shop: &mut RetailShop, request: &mut PaymentRequest, coin: Coin<USDC>
+) {
   assert!(object::id(shop) == request.shop, E_NOT_CORRECT_SHOP);
   request.paid.join(coin.into_balance());
 }
 
 /// 마지막으로 PaymentRequest를 확인하고 필요한 금액만큼 지불한게 맞으면 Stamp를 보상으로 줌
-public fun confirm_request(shop: &mut RetailShop, request: PaymentRequest, ctx: &mut TxContext): Option<Stamp> {
+public fun confirm_request(
+  shop: &mut RetailShop, request: PaymentRequest, ctx: &mut TxContext
+): Option<Stamp> {
   let PaymentRequest{shop: shop_id, price, paid, coupon_paid} = request;
   event::emit(PaidEvent { 
     shop: object::id(shop),
