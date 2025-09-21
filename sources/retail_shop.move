@@ -7,7 +7,6 @@ use sui::coin::{Coin};
 use sui::event;
 
 use usdc::usdc::USDC;
-use exclusuive::usde::USDE;
 
 const GUEST: vector<u8> = b"guest";
 
@@ -25,7 +24,6 @@ public struct RetailShop has key {
   membership_types: VecMap<String, RetailMembershipType>,
   coupon_types: VecMap<String, CouponType>,
   balance_usdc: Balance<USDC>,
-  balance_usde: Balance<USDE>
 }
 
 public struct RetailShopCap has key, store {
@@ -90,7 +88,6 @@ public fun new_shop(
     membership_types: vec_map::empty(),
     coupon_types: vec_map::empty(),
     balance_usdc: balance::zero(),
-    balance_usde: balance::zero()
   };
   let cap = RetailShopCap {
     id: object::new(ctx),
@@ -180,16 +177,8 @@ public (package) fun add_balance_usdc(shop: &mut RetailShop, coin: Coin<USDC>) {
   shop.balance_usdc.join(coin.into_balance());
 }
 
-public (package) fun add_balance_usde(shop: &mut RetailShop, coin: Coin<USDE>) {
-  shop.balance_usde.join(coin.into_balance());
-}
-
 public (package) fun withdraw_all_usdc(shop: &mut RetailShop): Balance<USDC> {
   shop.balance_usdc.withdraw_all()
-}
-
-public (package) fun withdraw_all_usde(shop: &mut RetailShop): Balance<USDE> {
-  shop.balance_usde.withdraw_all()
 }
 
 public (package) fun shop(cap: &RetailShopCap): ID {

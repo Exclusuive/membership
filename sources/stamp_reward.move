@@ -2,7 +2,6 @@ module exclusuive::stamp_reward;
 
 // Membership 오브젝트 -> StampCard
 use exclusuive::retail_shop::{RetailShop, RetailShopCap, RetailMembershipType, CouponType};
-use exclusuive::usde::USDE;
 
 use std::string::String;
 use sui::transfer::Receiving;
@@ -220,19 +219,6 @@ public fun add_balance_usdc(
 ):Option<Stamp> {
   let value = coin.value();
   shop.add_balance_usdc(coin);
-  if (value > MIN_STAMP_AMOUNT){
-    return option::some(new_stamp(shop, ctx))
-  };
-
-  option::none()
-}
-
-/// stamp_reward::add_balance 이용해서 자신만의 payment 로직 구축하면 됨
-public fun add_balance_usde(
-  shop: &mut RetailShop, coin: Coin<USDE>, ctx: &mut TxContext
-): Option<Stamp> {
-  let value = coin.value();
-  shop.add_balance_usde(coin);
   if (value > MIN_STAMP_AMOUNT){
     return option::some(new_stamp(shop, ctx))
   };
