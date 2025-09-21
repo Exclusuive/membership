@@ -22,7 +22,7 @@ const E_NOT_ENOUGH_STAMPS: u64 = 2;
 const E_EXPIRED: u64 = 3;
 
 // stamp는 queue로 사용 (선입선출)
-public struct StampCard has key {
+public struct StampCard has key, store {
   id: UID,
   shop: ID,
   membership_type: RetailMembershipType,
